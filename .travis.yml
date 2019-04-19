@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t allwchen/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run allwchen/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t allwchen/multi-client ./client
+  - docker build -t allwchen/multi-nginx ./nginx
+  - docker build -t allwchen/multi-server ./server
+  - docker build -t allwchen/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" -- password-stdin
+  # Take those images and push them to docker hub
+  - docker push allwchen/multi-client
+  - docker push allwchen/multi-nginx
+  - docker push allwchen/multi-server
+  - docker push allwchen/multi-worker
